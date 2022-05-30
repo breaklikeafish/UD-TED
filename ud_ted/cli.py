@@ -26,6 +26,9 @@ def main():
                         required=False,
                         help="the ids of the sentences to compare",
                         metavar=("id1", "id2"))
+    parser.add_argument("--deprel",
+                        action="store_true",
+                        help="compare dependency relation")
 
     # Parse arguments
     args = parser.parse_args()

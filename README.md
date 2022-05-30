@@ -12,6 +12,9 @@ The sentence ID of a sentence must appear in a comment above the respective sent
 ```
 # sent_id = <id>
 ```
+#### `--deprel`
+Adds the edit operation to relabel the edge label (dependency relation).
+Only the basic type of the dependency relation (i.e., the part before the colon) is compared.
 
 ## Output
 The tree edit distance between the input trees. 

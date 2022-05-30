@@ -1,11 +1,9 @@
-import sys
-
 import pyconll
 import zss
 
 from argparse import Namespace
 from typing import Optional
-from ud_ted.customize_zss import UDNode, UDNodeLabel, insert_cost, remove_cost, update_cost
+from ud_ted.customize_zss import UDNode, UDNodeLabel, CostModel
 
 
 def ud_ted(args: Namespace) -> int:
@@ -15,13 +13,14 @@ def ud_ted(args: Namespace) -> int:
     :param args: Contains command line arguments, including paths to the CoNLL-U files
     :return: The tree edit distance
     """
+    cost_model = CostModel(deprel=args.deprel)
     sent1 = load_sentence(args.file1, args.ids[0] if args.ids else None)
     sent2 = load_sentence(args.file2, args.ids[1] if args.ids else None)
     return zss.distance(sent1, sent2,
                         get_children=UDNode.get_children,
-                        insert_cost=insert_cost,
-                        remove_cost=remove_cost,
-                        update_cost=update_cost)
+                        insert_cost=cost_model.insert_cost,
+                        remove_cost=cost_model.remove_cost,
+                        update_cost=cost_model.update_cost)
 
 
 def load_sentence(path: str, sent_id: Optional[str]) -> UDNode:
@@ -35,14 +34,16 @@ def load_sentence(path: str, sent_id: Optional[str]) -> UDNode:
     for sentence in pyconll.load_from_file(path):
         if not sent_id or sent_id == sentence.id:
             pyconll_tree = sentence.to_tree()
-            tree = UDNode(UDNodeLabel(form=pyconll_tree.data.form))
+            tree = UDNode(UDNodeLabel(form=pyconll_tree.data.form,
+                                      deprel=pyconll_tree.data.deprel))
             for token in pyconll_tree:
                 _add_child(token, tree)
             return tree
 
 
 def _add_child(pyconll_tree: pyconll.tree.Tree, tree: UDNode):
-    node = UDNode(UDNodeLabel(form=pyconll_tree.data.form))
+    node = UDNode(UDNodeLabel(form=pyconll_tree.data.form,
+                              deprel=pyconll_tree.data.deprel))
     for token in pyconll_tree:
         _add_child(token, node)
     tree.addkid(node)
