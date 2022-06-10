@@ -34,7 +34,11 @@ def main():
     args = parser.parse_args()
 
     # Execute program
-    dist = ud_ted(args)
+    dist = ud_ted(file1=args.file1,
+                  file2=args.file2,
+                  id1=args.ids[0] if args.ids else None,
+                  id2=args.ids[1] if args.ids else None,
+                  deprel=args.deprel)
     print(f"Tree edit distance: {dist}")
 
 
