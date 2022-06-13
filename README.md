@@ -15,6 +15,8 @@ The sentence ID of a sentence must appear in a comment above the respective sent
 #### `--deprel`
 Adds the edit operation to relabel the edge label (dependency relation).
 Only the basic type of the dependency relation (i.e., the part before the colon) is compared.
+#### `--upos`
+Adds the edit operation to relabel the universal dependency tag (UPOS).
 
 ## Output
 The tree edit distance between the input trees. 

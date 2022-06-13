@@ -8,7 +8,8 @@ from uted import uted_astar
 
 def ud_ted(file1: str, file2: str,
            id1: Optional[str] = None, id2: Optional[str] = None,
-           deprel: Optional[bool] = False
+           deprel: Optional[bool] = False,
+           upos: Optional[bool] = False
            ) -> float:
     """
     Computes the tree edit distance between two CoNLL-U sentences.
@@ -18,6 +19,7 @@ def ud_ted(file1: str, file2: str,
     :param id1: Optional. The ID of the first sentence
     :param id2: Optional. The ID of the second sentence
     :param deprel: Optional. Whether to compare the dependency relationship label
+    :param upos: Optional. Whether to compare the universal dependency tag
     :return: The tree edit distance
     """
     # Load input
@@ -25,10 +27,7 @@ def ud_ted(file1: str, file2: str,
     y_nodes, y_adj = load_sentence(file2, id2)
 
     # Choose cost function
-    if deprel:
-        cost_func = CostModel.deprel_cost_func
-    else:
-        cost_func = CostModel.simple_cost_func
+    cost_func = _choose_cost_func(deprel, upos)
 
     # Compute distance
     distance, alignment, n = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func)
@@ -47,7 +46,7 @@ def load_sentence(path: str, sent_id: Optional[str] = None) -> Tuple[List[Label]
     for sentence in pyconll.load_from_file(path):
         pyconll_tree = sentence.to_tree()
         if not sent_id or sent_id == sentence.id:
-            nodes = [Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel)]
+            nodes = [Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos)]
             child_index = 1
             adj = [[]]
             for token in pyconll_tree:
@@ -57,7 +56,7 @@ def load_sentence(path: str, sent_id: Optional[str] = None) -> Tuple[List[Label]
 
 
 def _add_child(pyconll_tree: pyconll.tree.Tree, tree: List[Label], adj: List[List[int]], index: int) -> int:
-    tree.append(Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel))
+    tree.append(Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos))
     while index >= len(adj):
         adj.append([])
     new_index = index
@@ -65,3 +64,16 @@ def _add_child(pyconll_tree: pyconll.tree.Tree, tree: List[Label], adj: List[Lis
         new_index = _add_child(token, tree, adj, new_index)
         adj[index].append(new_index)
     return new_index + 1
+
+
+def _choose_cost_func(deprel: bool, upos: bool):
+    if deprel:
+        if upos:
+            return CostModel.deprel_upos_cost_func
+        else:
+            return CostModel.deprel_cost_func
+    else:
+        if upos:
+            return CostModel.upos_cost_func
+        else:
+            return CostModel.simple_cost_func

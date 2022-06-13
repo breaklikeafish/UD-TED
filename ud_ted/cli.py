@@ -29,6 +29,9 @@ def main():
     parser.add_argument("--deprel",
                         action="store_true",
                         help="compare dependency relation")
+    parser.add_argument("--upos",
+                        action="store_true",
+                        help="compare universal dependency tags")
 
     # Parse arguments
     args = parser.parse_args()
@@ -38,7 +41,8 @@ def main():
                   file2=args.file2,
                   id1=args.ids[0] if args.ids else None,
                   id2=args.ids[1] if args.ids else None,
-                  deprel=args.deprel)
+                  deprel=args.deprel,
+                  upos=args.upos)
     print(f"Tree edit distance: {dist}")
 
 
