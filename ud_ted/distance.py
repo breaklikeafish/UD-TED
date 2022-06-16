@@ -1,7 +1,7 @@
 import time
-
 import pyconll
 
+from edist import ted
 from typing import List, Optional, Tuple
 from ud_ted import CostModel
 from ud_ted.CostModel import Label
@@ -9,8 +9,9 @@ from uted import uted_astar
 
 
 def ud_ted(file1: str, file2: str,
-           id1: Optional[str] = None, id2: Optional[str] = None,
            timeout: Optional[float] = None,
+           ordered: bool = False,
+           id1: Optional[str] = None, id2: Optional[str] = None,
            deprel: Optional[bool] = False,
            upos: Optional[bool] = False
            ) -> float:
@@ -19,9 +20,10 @@ def ud_ted(file1: str, file2: str,
 
     :param file1: The path to the CoNLL-U file containing the first sentence
     :param file2: The path to the CoNLL-U file containing the second sentence
+    :param timeout: Optional. The number of seconds after which to stop the search
+    :param ordered: Whether to compute the ordered or unordered tree edit distance
     :param id1: Optional. The ID of the first sentence
     :param id2: Optional. The ID of the second sentence
-    :param timeout: Optional. The number of seconds after which to stop the search
     :param deprel: Optional. Whether to compare the dependency relationship label
     :param upos: Optional. Whether to compare the universal dependency tag
     :return: The tree edit distance
@@ -34,13 +36,17 @@ def ud_ted(file1: str, file2: str,
     cost_func = _choose_cost_func(deprel, upos)
 
     # Compute distance
-    distance, alignment, n = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, timeout=timeout)
+    if ordered:
+        distance = ted.ted(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func)
+    else:
+        distance, _, _ = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, timeout=timeout)
 
     return distance
 
 
 def avg_ud_ted(file1: str, file2: str,
                timeout: Optional[float] = None,
+               ordered: bool = False,
                deprel: Optional[bool] = False,
                upos: Optional[bool] = False
                ) -> float:
@@ -50,6 +56,7 @@ def avg_ud_ted(file1: str, file2: str,
     :param file1: The path to the CoNLL-U file containing the first treebank
     :param file2: The path to the CoNLL-U file containing the second treebank
     :param timeout: Optional. The number of seconds after which to stop the search
+    :param ordered: Whether to compute the ordered or unordered tree edit distance
     :param deprel: Optional. Whether to compare the dependency relationship label
     :param upos: Optional. Whether to compare the universal dependency tag
     :return: The tree edit distance
@@ -76,8 +83,11 @@ def avg_ud_ted(file1: str, file2: str,
 
         # Compute distance
         start = time.time()
-        x = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, timeout=timeout)
-        distance, alignment, n = x if x else (None, None, None)
+        if ordered:
+            distance = ted.ted(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func)
+        else:
+            x = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, timeout=timeout)
+            distance, _, _ = x if x else (None, None, None)
         end = time.time()
 
         print(f"{sent_id}\t{distance}\t{end - start}sec\t{max(len(x_nodes), len(y_nodes))}")
