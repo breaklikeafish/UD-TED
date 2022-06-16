@@ -21,6 +21,12 @@ def main():
                         type=str,
                         help="the path to the file containing the second sentence",
                         metavar="file2")
+    parser.add_argument("--timeout",
+                        nargs=1,
+                        type=float,
+                        required=False,
+                        help="timeout in seconds",
+                        metavar="n")
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--ids",
@@ -48,6 +54,7 @@ def main():
         start = time.time()
         dist = avg_ud_ted(file1=args.file1,
                           file2=args.file2,
+                          timeout=args.timeout[0] if args.timeout else None,
                           deprel=args.deprel,
                           upos=args.upos)
         end = time.time()
@@ -57,6 +64,7 @@ def main():
                       file2=args.file2,
                       id1=args.ids[0] if args.ids else None,
                       id2=args.ids[1] if args.ids else None,
+                      timeout=args.timeout[0] if args.timeout else None,
                       deprel=args.deprel,
                       upos=args.upos)
         end = time.time()

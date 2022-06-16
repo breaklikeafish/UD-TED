@@ -21,6 +21,7 @@ An implementation of the unordered tree edit distance.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import time
 from queue import PriorityQueue
 from scipy.optimize import linear_sum_assignment
 
@@ -427,7 +428,7 @@ class CubicHeuristic:
         return C[I, J].sum()
 
 
-def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verbose = False):
+def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verbose = False, timeout=None):
     """ Computes the unordered tree edit distance between two trees via an
     A* algorithm. This implementation is inspired by Yoshino, Higuchi, and
     Hirata (2013). In contrast to this prior work, however, we are not
@@ -465,6 +466,9 @@ def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verb
         different between heuristics: Yoshino and 1 are linear-time,
         2 is quadratic, and 3 is cubic time. However, 2 provides a tighter
         lower bound than 1, and 3 a tighter bound than 2.
+    timeout: int (default = None)
+        Number of seconds after which to stop searching or None if no timeout
+        is desired.
 
     Returns
     -------
@@ -551,7 +555,13 @@ def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verb
     highest_lower_bound = 0
 
     # keep searching
+    start = time.time()
     while not Q.empty():
+
+        # stop if search takes too long
+        if timeout and time.time() - start > timeout:
+            return None
+
         # pop the edit path with the currently best lower
         # bound
         f_lo_parent, g_parent, v_parent = Q.get()
