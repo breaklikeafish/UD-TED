@@ -1,5 +1,6 @@
-import time
 import pyconll
+import requests
+import time
 
 from edist import ted
 from typing import List, Optional, Tuple
@@ -39,7 +40,8 @@ def ud_ted(file1: str, file2: str,
     if ordered:
         distance = ted.ted(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func)
     else:
-        distance, _, _ = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, timeout=timeout)
+        distance, _, _ = uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta=cost_func, heuristic=1,
+                                    timeout=timeout)
 
     return distance
 
@@ -67,7 +69,7 @@ def avg_ud_ted(file1: str, file2: str,
     # Choose cost function
     cost_func = _choose_cost_func(deprel, upos)
 
-    print(f"ID\tDistance\tTime\tNum of Nodes")
+    print(f"ID\tDistance\tTime\tNodes1\tNodes2")
 
     while True:
 
@@ -90,9 +92,9 @@ def avg_ud_ted(file1: str, file2: str,
             distance, _, _ = x if x else (None, None, None)
         end = time.time()
 
-        print(f"{sent_id}\t{distance}\t{end - start}sec\t{max(len(x_nodes), len(y_nodes))}")
+        print(f"{sent_id}\t{distance}\t{end - start}sec\t{len(x_nodes)}\t{len(y_nodes)}")
 
-        if distance:
+        if distance is not None:
             distances.append(distance)
 
         i += 1
@@ -112,7 +114,12 @@ def load_sentence(path: str, sent_id: Optional[str] = None, sent_num: int = 0, r
     :param return_id: Whether to return the sentence ID if given
     :return: A tuple of a label list and an adjacency list (and the sentence ID if return_id is True)
     """
-    for i, sentence in enumerate(pyconll.load_from_file(path)):
+    if path.startswith("https://"):
+        path = requests.get(path).text
+        load_func = pyconll.load_from_string
+    else:
+        load_func = pyconll.load_from_file
+    for i, sentence in enumerate(load_func(path)):
         pyconll_tree = sentence.to_tree()
         if sent_id == sentence.id or (sent_id is None and sent_num == i):
             nodes = [Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos)]

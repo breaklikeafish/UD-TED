@@ -7,7 +7,11 @@ name = "pypi"
 edist = "*"
 numpy = ">=1.20"
 pyconll = "*"
+requests = "*"
 scipy = ">=1.6"
 
 [dev-packages]
 build = "*"
+
+[requires]
+python_version = "3.10"
