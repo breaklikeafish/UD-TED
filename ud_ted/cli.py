@@ -33,7 +33,7 @@ def main():
                        action="store_true",
                        help="compute the ordered tree edit distance")
 
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--ids",
                        nargs=2,
                        type=str,

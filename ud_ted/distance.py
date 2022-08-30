@@ -3,7 +3,7 @@ import requests
 import time
 
 from edist import ted
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Generator
 from ud_ted import CostModel
 from ud_ted.CostModel import Label
 from uted import uted_astar
@@ -71,17 +71,13 @@ def avg_ud_ted(file1: str, file2: str,
 
     print(f"ID\tDistance\tTime\tNodes1\tNodes2")
 
-    while True:
-
-        # Load input
-        sent1 = load_sentence(file1, sent_num=i, return_id=True)
-        sent2 = load_sentence(file2, sent_num=i)
+    for sent1, sent2 in zip(load_all_sentences(file1), load_all_sentences(file2)):
 
         if sent1 is None or sent2 is None:
             break
 
         x_nodes, x_adj, sent_id = sent1
-        y_nodes, y_adj = sent2
+        y_nodes, y_adj, _ = sent2
 
         # Compute distance
         start = time.time()
@@ -99,18 +95,42 @@ def avg_ud_ted(file1: str, file2: str,
 
         i += 1
 
+    print(f"Number of distances: {len(distances)}")
+
     if len(distances) > 0:
-        return sum(distances)/len(distances)
+        return sum(distances) / len(distances)
 
 
-def load_sentence(path: str, sent_id: Optional[str] = None, sent_num: int = 0, return_id: bool = False) \
+def load_all_sentences(path: str) -> Generator[Tuple[List[Label], List[List[int]], Optional[str]], None, None]:
+    """
+    Yields all CoNLL-U sentences as an adjacency representation of the tree
+
+    :param path: The path to the CoNLL-U file
+    :return: A generator over all sentences in the file
+    """
+    if path.startswith("https://"):
+        path = requests.get(path).text
+        load_func = pyconll.load_from_string
+    else:
+        load_func = pyconll.load_from_file
+    for sentence in load_func(path):
+        pyconll_tree = sentence.to_tree()
+        nodes = [Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos)]
+        adj = [[]]
+        for token in pyconll_tree:
+            _add_child(token, nodes, adj, 0)
+        while len(nodes) > len(adj):
+            adj.append([])
+        yield nodes, adj, sentence.id
+
+
+def load_sentence(path: str, sent_id: Optional[str] = None, return_id: bool = False) \
         -> Tuple[List[Label], List[List[int]]] | Tuple[List[Label], List[List[int]], str]:
     """
     Loads the CoNLL-U sentence into an adjacency representation of the tree
 
     :param path: The path to the CoNLL-U file containing the sentence
-    :param sent_id: Optional. The ID of the second sentence
-    :param sent_num: The position of the sentence in the file (only if sent_id is None)
+    :param sent_id: Optional. The ID of the sentence
     :param return_id: Whether to return the sentence ID if given
     :return: A tuple of a label list and an adjacency list (and the sentence ID if return_id is True)
     """
@@ -119,15 +139,13 @@ def load_sentence(path: str, sent_id: Optional[str] = None, sent_num: int = 0, r
         load_func = pyconll.load_from_string
     else:
         load_func = pyconll.load_from_file
-    for i, sentence in enumerate(load_func(path)):
+    for sentence in load_func(path):
         pyconll_tree = sentence.to_tree()
-        if sent_id == sentence.id or (sent_id is None and sent_num == i):
+        if sent_id == sentence.id:
             nodes = [Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos)]
-            child_index = 1
             adj = [[]]
             for token in pyconll_tree:
-                adj[0].append(child_index)
-                child_index = _add_child(token, nodes, adj, child_index)
+                _add_child(token, nodes, adj, 0)
             while len(nodes) > len(adj):
                 adj.append([])
             if return_id:
@@ -136,15 +154,14 @@ def load_sentence(path: str, sent_id: Optional[str] = None, sent_num: int = 0, r
                 return nodes, adj
 
 
-def _add_child(pyconll_tree: pyconll.tree.Tree, tree: List[Label], adj: List[List[int]], index: int) -> int:
+def _add_child(pyconll_tree: pyconll.tree.Tree, tree: List[Label], adj: List[List[int]], parent: int):
     tree.append(Label(form=pyconll_tree.data.form, deprel=pyconll_tree.data.deprel, upos=pyconll_tree.data.upos))
-    while index >= len(adj):
+    while parent >= len(adj):
         adj.append([])
-    new_index = index
+    adj[parent].append(len(tree)-1)
+    parent = len(tree)-1
     for token in pyconll_tree:
-        new_index = _add_child(token, tree, adj, new_index)
-        adj[index].append(new_index)
-    return new_index + 1
+        _add_child(token, tree, adj, parent)
 
 
 def _choose_cost_func(deprel: bool, upos: bool):

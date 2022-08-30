@@ -39,7 +39,7 @@ def outermost_right_leaves(adj):
 
     Note that we assume a proper depth-first-search order of adj, i.e. for
     every node i, the following indices are all part of the subtree rooted at
-    i until we hit the index of i's right sibling or the end of the tree.
+    i until we hit the parent of i's right sibling or the end of the tree.
 
     Parameters
     ----------
@@ -50,7 +50,7 @@ def outermost_right_leaves(adj):
     Returns
     -------
     orl: int array
-        An array containing the outermost right leaf index for every node
+        An array containing the outermost right leaf parent for every node
         in the tree.
 
     """
@@ -90,7 +90,7 @@ def parents(adj):
     -------
     par: int array
         a numpy integer array with len(adj) elements, where the ith
-        element contains the index of the parent of the ith node.
+        element contains the parent of the parent of the ith node.
         Nodes without children contain the entry -1.
 
     """
@@ -111,11 +111,11 @@ class YoshinoHeuristic:
     Attributes
     ----------
     x_labels: ndarray
-        An array storing an index identifying each node label in x.
+        An array storing an parent identifying each node label in x.
     x_degs: ndarray
         An array storing the degree for each node in x.
     y_labels: ndarray
-        An array storing an index identifying each node label in y.
+        An array storing an parent identifying each node label in y.
     y_degs: ndarray
         An array storing the degree for each node in y.
     self.max_degree: int
@@ -150,11 +150,11 @@ class YoshinoHeuristic:
         self.y_degs = np.array([len(adj) for adj in self.y_adj])
         self.max_degree = max(np.max(self.x_degs), np.max(self.y_degs))
 
-        # pre-compute index representation of labels
+        # pre-compute parent representation of labels
         label_map = {}
         for sym in (self.x_nodes + self.y_nodes):
             label_map.setdefault(sym, len(label_map))
-        # pre-compute index representation for all nodes
+        # pre-compute parent representation for all nodes
         self.x_labels = [label_map[sym] for sym in self.x_nodes]
         self.y_labels = [label_map[sym] for sym in self.y_nodes]
         self.num_labels = len(label_map)
@@ -166,9 +166,9 @@ class YoshinoHeuristic:
         Parameters
         ----------
         i: int
-            The start index of the subforest in x.
+            The start parent of the subforest in x.
         k: int
-            The end index of the subforest in x.
+            The end parent of the subforest in x.
         remaining: set
             The set of indices for the suborest in y.
 
@@ -243,9 +243,9 @@ class LinearHeuristic:
         Parameters
         ----------
         i: int
-            The start index of the subforest in x.
+            The start parent of the subforest in x.
         k: int
-            The end index of the subforest in x.
+            The end parent of the subforest in x.
         remaining: set
             The set of indices for the suborest in y.
 
@@ -312,9 +312,9 @@ class QuadraticHeuristic:
         Parameters
         ----------
         i: int
-            The start index of the subforest in x.
+            The start parent of the subforest in x.
         k: int
-            The end index of the subforest in x.
+            The end parent of the subforest in x.
         remaining: set
             The set of indices for the suborest in y.
 
@@ -390,9 +390,9 @@ class CubicHeuristic:
         Parameters
         ----------
         i: int
-            The start index of the subforest in x.
+            The start parent of the subforest in x.
         k: int
-            The end index of the subforest in x.
+            The end parent of the subforest in x.
         remaining: set
             The set of indices for the suborest in y.
 
@@ -532,7 +532,7 @@ def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verb
 
     # set up a list of nodes in the edit distance search tree
     # note: in the edit distance search tree, depth codes the
-    # index i in the left tree and the label codes the index j
+    # parent i in the left tree and the label codes the parent j
     # in the right tree. The path from the root to a node
     # constitutes a partial alignment of both trees.
     edist_nodes   = [0]
