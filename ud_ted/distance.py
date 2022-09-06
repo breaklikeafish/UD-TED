@@ -1,3 +1,19 @@
+# A tree edit-distance tool for Universal Dependencies.
+# Copyright (C) 2022 Klara Lennermann
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import pyconll
 import requests
 import time
@@ -46,7 +62,7 @@ def ud_ted(file1: str, file2: str,
     return distance
 
 
-def avg_ud_ted(file1: str, file2: str,
+def doc_ud_ted(file1: str, file2: str,
                timeout: Optional[float] = None,
                ordered: bool = False,
                deprel: Optional[bool] = False,
@@ -94,8 +110,6 @@ def avg_ud_ted(file1: str, file2: str,
             distances.append(distance)
 
         i += 1
-
-    print(f"Number of distances: {len(distances)}")
 
     if len(distances) > 0:
         return sum(distances) / len(distances)

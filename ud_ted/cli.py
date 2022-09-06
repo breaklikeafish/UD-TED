@@ -1,7 +1,25 @@
+# A tree edit-distance tool for Universal Dependencies.
+# Copyright (C) 2022 Klara Lennermann
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+__version__ = "0.1.0"
+
 import argparse
 import time
 
-from ud_ted.distance import ud_ted, avg_ud_ted
+from ud_ted.distance import ud_ted, doc_ud_ted
 
 
 def main():
@@ -13,6 +31,8 @@ def main():
                                                  "dependency trees")
 
     # Add arguments
+    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
+
     parser.add_argument("file1",
                         type=str,
                         help="the path to the file containing the first sentence",
@@ -57,7 +77,7 @@ def main():
     # Execute program
     if args.doc:
         start = time.time()
-        dist = avg_ud_ted(file1=args.file1,
+        dist = doc_ud_ted(file1=args.file1,
                           file2=args.file2,
                           timeout=args.timeout[0] if args.timeout else None,
                           ordered=args.ordered,
