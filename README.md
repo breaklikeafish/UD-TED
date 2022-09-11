@@ -1,6 +1,8 @@
 # UD-TED
 A tree edit-distance tool for Universal Dependencies developed as part of my Bachelor's thesis.
 
+This package is available on pypi as `ud-ted`.
+
 ## Input
 The `ud-ted` command takes two positional arguments, both of them paths to CoNLL-U files containing the input sentences.
 If no other option is given, the unordered tree edit distance between the first sentences in the files is computed following the implementation by Paaßen (2021).
